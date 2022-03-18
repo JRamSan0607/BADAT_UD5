@@ -1,0 +1,190 @@
+DROP DATABASE IF EXISTS gescomercial;
+CREATE DATABASE IF NOT EXISTS gescomercial;
+
+USE gescomercial;
+DROP TABLE IF EXISTS Paises;
+CREATE TABLE IF NOT EXISTS Paises(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) UNIQUE NOT NULL,
+    bandera VARCHAR(20) UNIQUE NOT NULL
+);
+
+DROP TABLE IF EXISTS Rondas;
+CREATE TABLE IF NOT EXISTS Rondas(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS Categorias;
+CREATE TABLE IF NOT EXISTS Categorias(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL,
+    descripcion VARCHAR(100),
+    imagen VARCHAR(20)
+);
+
+DROP TABLE IF EXISTS Premios;
+CREATE TABLE IF NOT EXISTS Premios(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL,
+    descripcion VARCHAR(100),
+    importe decimal(8,2) NOT NULL
+);
+
+DROP TABLE IF EXISTS Pistas;
+CREATE TABLE IF NOT EXISTS Pistas(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL,
+    descripcion VARCHAR(100),
+    imagen VARCHAR(20),
+    ubicación VARCHAR(30) NOT NULL,
+    categoría VARCHAR(20) NOT NULL CHECK(categoria BETWEEN 1 AND 5),
+    capacidad TINYINT(100)
+);
+
+DROP TABLE IF EXISTS Jueces;
+CREATE TABLE IF NOT EXISTS Jueces(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL,
+    id_pais INT UNSIGNED,
+    ranking INT UNSIGNED,
+    nif CHAR(9) UNIQUE NOT NULL,
+    email VARCHAR(30) UNIQUE,
+    id_juez_jefe INT UNSIGNED,
+    FOREIGN KEY(id_pais) REFERENCES paises(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_jueces) REFERENCES jueces(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Jugadores;
+CREATE TABLE IF NOT EXISTS Jugadores(
+	id INT UNSIGNED AUTO_INCREMENT,
+    codigo CHAR(10) AUTO_INCREMENT PRIMARY KEY CHECK(codigo LIKE('TEN______A')),
+    nombre VARCHAR(20) NOT NULL,
+    nif CHAR(9) UNIQUE NOT NULL,
+    telefono VARCHAR(30) UNIQUE,
+    fecha_nac DATE NOT NULL,
+    edad INT NOT NULL CHECK(edad>16),
+    peso FLOAT(3,1) CHECK(peso LIKE "__,_Kg"),
+    altura FLOAT(1,2) CHECK(altura LIKE "_,__m"),
+    id_pais INT UNSIGNED NOT NULL,
+    prof_desde DATE NOT NULL CHECK(prof_desde>1980),
+    lugar_nac VARCHAR(20) NOT NULL,
+    juego VARCHAR(100) NOT NULL,
+	entrenador VARCHAR(20) NOT NULL,
+    puntos INT UNSIGNED NOT NULL CHECK(puntos BETWEEN 500 AND 10000),
+    ranking_atp INT UNSIGNED CHECK(ranking_apt>1),
+    FOREIGN KEY(id_pais) REFERENCES paises(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Participantes;
+CREATE TABLE IF NOT EXISTS Participantes(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_jugador INT UNSIGNED NOT NULL,
+    id_categoria INT UNSIGNED NOT NULL,
+    fecha_inscripcion DATE NOT NULL,
+    cabeza_serie ENUM('primer', 'segundo', 'tercer', 'cuarto', 'quinto'),
+    FOREIGN KEY(id_jugador) REFERENCES jugadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_categoria) REFERENCES categorias(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Partidos;
+CREATE TABLE IF NOT EXISTS Partidos(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    descripcion VARCHAR(100) CHECK(descripcion LIKE'torneo%'),
+    id_ronda INT UNSIGNED NOT NULL,
+    id_pista INT UNSIGNED NOT NULL,
+    id_categoria INT UNSIGNED NOT NULL,
+    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+    id_jugador_1 INT UNSIGNED NOT NULL,
+    id_jugador_2 INT UNSIGNED NOT NULL,
+    id_juez INT UNSIGNED,
+    set_1 TINYINT(1) NOT NULL CHECK(set_1 BETWEEN 0 AND 3),
+    set_2 TINYINT(1) NOT NULL CHECK(set_2 BETWEEN 0 AND 3),
+    incidencias VARCHAR(100),
+    FOREIGN KEY(id_ronda) REFERENCES rondas(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_pista) REFERENCES pistas(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_categoria) REFERENCES categorias(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_juez) REFERENCES jueces(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Sets;
+CREATE TABLE IF NOT EXISTS Sets(
+	id INT UNSIGNED AUTO_INCREMENT,
+    id_partido INT UNSIGNED NOT NULL,
+    juegos_1 INT UNSIGNED NOT NULL CHECK(juegos_1<15),
+    juegos_2 INT UNSIGNED NOT NULL CHECK(juegos_2<15)
+);
+
+DROP TABLE IF EXISTS Juegos;
+CREATE TABLE IF NOT EXISTS Juegos(
+	id INT UNSIGNED PRIMARY KEY,
+    id_set INT UNSIGNED NOT NULL,
+    id_jugador_saque INT UNSIGNED NOT NULL,
+    puntos_1 INT UNSIGNED NOT NULL CHECK(puntos_1 BETWEEN 0 AND 50),
+    puntos_2 INT UNSIGNED NOT NULL CHECK(puntos_2 BETWEEN 0 AND 50),
+    tie_break BOOLEAN DEFAULT FALSE,
+    num_ventajas INT UNSIGNED NOT NULL,
+    break BOOLEAN,
+    incidencias VARCHAR(100),
+    FOREIGN KEY(id_sets) REFERENCES sets(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_jugador_saque) REFERENCES jugadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Estadisticas;
+CREATE TABLE IF NOT EXISTS Estadisticas(
+	id INT UNSIGNED NOT NULL PRIMARY KEY,
+    id_jugador INT UNSIGNED NOT NULL,
+    id_partido INT UNSIGNED NOT NULL,
+	ace INT UNSIGNED,
+    dobles_faltas INT UNSIGNED NOT NULL,
+    primer_servicio FLOAT(4,3),
+    win_primer_servicio INT UNSIGNED NOT NULL,
+    win_segundo_servicio INT UNSIGNED NOT NULL,
+    puntos_red INT UNSIGNED NOT NULL,
+    break_points INT UNSIGNED NOT NULL,
+    puntos_resto INT UNSIGNED NOT NULL,
+    winners INT UNSIGNED NOT NULL,
+    errores_no_forzados INT UNSIGNED NOT NULL,
+    total_puntos INT UNSIGNED NOT NULL,
+    distancia_recorrida INT UNSIGNED NOT NULL,
+    distancia_recorrida_puntos INT UNSIGNED NOT NULL,
+    FOREIGN KEY(id_jugador) REFERENCES jugadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_partido) REFERENCES partidos(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Clasificacion;
+CREATE TABLE IF NOT EXISTS Clasificacion(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_categoria INT UNSIGNED NOT NULL,
+	id_jugador INT UNSIGNED NOT NULL,
+    puesto INT UNSIGNED NOT NULL,
+    FOREIGN KEY(id_categoria) REFERENCES categorias(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_jugador) REFERENCES jugadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE IF EXISTS Palmares;
+CREATE TABLE IF NOT EXISTS Palmares(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_jugador INT UNSIGNED NOT NULL,
+    id_premio INT UNSIGNED NOT NULL,
+    fecha DATE NOT NULL,
+	FOREIGN KEY(id_jugador) REFERENCES jugadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY(id_premio) REFERENCES premios(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
